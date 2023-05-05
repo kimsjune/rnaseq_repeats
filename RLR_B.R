@@ -2,13 +2,23 @@
 # Author: Seung June Kim
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
-install.packages("Rtools")
-install.packages("edgeR")
-library(edgeR)
-source("C:/Users/jk/Documents/R/win-library/3.6/EnhancedVolcano.R")
+packages <- c("edgeR","extrafont","ggplot2","gplots","Rtools","RColorBrewer","ggrepel","EnhancedVolcano")
 
+# Install packages not yet installed
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}
+
+# Packages loading
+invisible(lapply(packages, library, character.only = TRUE))
+source("C:/users/jk/Documents/Lab/EnhancedVolcano.R")
+
+
+font_import()
 
 setwd("~/Lab/Spleen_RNA_seq/repenrich/counts/fraction/")
+set.seed(0)
 
 # read count table
 RD1<-read.delim("RLR_B_D1_fraction_counts.txt",header=F)
@@ -65,7 +75,7 @@ topTags(test)
 x.glm.fit.ql<-glmQLFit(x.glm,r.design)
 # testing the last coefficient in the linear model (GSK vs DMSO)
 
-# LR test --obsolete
+# LR test
 #####
  x.glm.lrt<-glmLRT(x.glm.fit)
  topTags(x.glm.lrt)
@@ -74,24 +84,17 @@ x.glm.fit.ql<-glmQLFit(x.glm,r.design)
  x.dge.all<- topTags(x.glm.lrt,n="Inf", sort.by="logFC")
  x.dge.all.sort <- x.dge.all[order(x.dge.all$table$logFC),]
 #####
-x.glm.qlt<-glmQLFTest(x.glm.fit.ql)
-topTags(x.glm.qlt)
-summary(decideTests(x.glm.qlt))
-# subset DGEs
-x.dge.qlt<- topTags(x.glm.qlt,n=52, sort.by="PValue")
+
 
 
 tiff("RLR_B_MD.tiff",units='in',width=5,height=5,res=1200)
 plotMD(x.glm.lrt, xlim=c(-5,15),main="GSK343 treated RLR B cells")
 dev.off()
-library(Glimma)
+
 
 
 # RowSideColor vector
-install.packages("gplots")
-install.packages("RColorBrewer")
-library(gplots)
-library(RColorBrewer)
+
 colfunc<-colorRampPalette(c("blue","black","red"))
 
 # sort DGEs (by P value) now by log FC
@@ -188,7 +191,7 @@ dev.off()
 
 
 
-# LRT obsolete
+
 #####
 tiff(filename="RLR_heatmap_lrt.tiff",units='in',width=7,height=12,res=600)
 heatmap.2(cpm(x)[rownames(x.dge.lrt.fcsort),],
